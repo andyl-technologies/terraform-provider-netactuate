@@ -1,6 +1,6 @@
 module github.com/netactuate/terraform-provider-netactuate
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/hashicorp/go-cty v1.5.0
@@ -38,8 +38,6 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
-	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20231121144256-b99613f794b6 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
@@ -50,5 +48,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/grpc v1.75.1 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
 )
+
+replace github.com/netactuate/gona => github.com/andyl-technologies/gona v0.0.0-20251024183511-1fc299d89e36

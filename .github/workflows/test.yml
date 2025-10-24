@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        go: ['stable']
+        go: ['stable', 'oldstable']
 
     steps:
       - uses: actions/checkout@v5

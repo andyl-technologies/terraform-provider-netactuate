@@ -46,7 +46,7 @@ func resourceSshKey() *schema.Resource {
 func resourceSshKeyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*gona.Client)
 
-	sshKey, err := c.CreateSSHKey(d.Get("name").(string), d.Get("key").(string))
+	sshKey, err := c.CreateSSHKey(ctx, d.Get("name").(string), d.Get("key").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,7 +64,7 @@ func resourceSshKeyRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	sshKey, err := c.GetSSHKey(id)
+	sshKey, err := c.GetSSHKey(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceSshKeyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil
 	}
 
-	err = c.DeleteSSHKey(id)
+	err = c.DeleteSSHKey(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -110,7 +110,7 @@ func resourceSshKeyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil
 	}
 
-	err = c.DeleteSSHKey(id)
+	err = c.DeleteSSHKey(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func resourceSshKeyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	time.Sleep(3 * time.Second)
 
 	// Create the second key
-	sshKey, err := c.CreateSSHKey(d.Get("name").(string), d.Get("key").(string))
+	sshKey, err := c.CreateSSHKey(ctx, d.Get("name").(string), d.Get("key").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}

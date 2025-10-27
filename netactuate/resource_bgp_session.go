@@ -47,9 +47,13 @@ func resourceBGPSessions() *schema.Resource {
 func resourceBGPSessionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*gona.Client)
 
-	_, err := c.CreateBGPSessions(d.Get("mbpkgid").(int), d.Get("group_id").(int), d.Get("ipv6").(bool),
-		d.Get("redundant").(bool))
-	if err != nil {
+	if _, err := c.CreateBGPSessions(
+		ctx,
+		d.Get("mbpkgid").(int),
+		d.Get("group_id").(int),
+		d.Get("ipv6").(bool),
+		d.Get("redundant").(bool),
+	); err != nil {
 		return diag.FromErr(err)
 	}
 

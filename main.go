@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/netactuate/terraform-provider-netactuate/netactuate"
 )
@@ -21,9 +20,7 @@ func main() {
 	flag.Parse()
 
 	opts := &plugin.ServeOpts{
-		ProviderFunc: func() *schema.Provider {
-			return netactuate.Provider()
-		},
+		ProviderFunc: netactuate.Provider,
 	}
 
 	if debugMode {

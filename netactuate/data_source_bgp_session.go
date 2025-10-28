@@ -99,7 +99,7 @@ func dataSourceBGPSessionsRead(ctx context.Context, d *schema.ResourceData, m an
 
 	MbPkgID := d.Get("mbpkgid").(int)
 
-	sessions, err := c.GetBGPSessions(MbPkgID)
+	sessions, err := c.GetBGPSessions(ctx, MbPkgID)
 	if err != nil {
 		return diag.FromErr(err)
 	}

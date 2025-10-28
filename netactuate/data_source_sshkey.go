@@ -36,7 +36,7 @@ func dataSourceSshKey() *schema.Resource {
 func dataSourceSshKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 
-	sshKey, err := c.GetSSHKey(d.Get("id").(int))
+	sshKey, err := c.GetSSHKey(ctx, d.Get("id").(int))
 	if err != nil {
 		return diag.FromErr(err)
 	}

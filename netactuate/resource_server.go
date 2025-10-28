@@ -176,7 +176,7 @@ func resourceServer() *schema.Resource {
 func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 
-	locationId, imageId, diags := getParams(d, c)
+	locationId, imageId, diags := getParams(ctx, d, c)
 	if diags != nil {
 		return diags
 	}
@@ -225,7 +225,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		}
 	}
 
-	s, err := c.CreateServer(req)
+	s, err := c.CreateServer(ctx, req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -233,11 +233,11 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m any) di
 	d.SetId(strconv.Itoa(s.ServerID))
 	d.Set("params", req.Params) // Store params in the state file
 
-	if _, err := wait4Status(s.ServerID, "RUNNING", c); err != nil {
+	if _, err := wait4Status(ctx, s.ServerID, "RUNNING", c); err != nil {
 		return err
 	}
 
-	server, err := c.GetServer(s.ServerID)
+	server, err := c.GetServer(ctx, s.ServerID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -255,7 +255,7 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m any) diag
 		return diag.FromErr(err)
 	}
 
-	server, err := c.GetServer(id)
+	server, err := c.GetServer(ctx, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -306,13 +306,13 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 
 		if oldHost != "" {
 			// delete
-			err = c.DeleteServer(id, false)
+			err = c.DeleteServer(ctx, id, false)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// await termination
-			if _, err := wait4Status(id, "TERMINATED", c); err != nil {
+			if _, err := wait4Status(ctx, id, "TERMINATED", c); err != nil {
 				return err
 			}
 		}
@@ -331,7 +331,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 					return diags
 				}
 				if unlinkRequired {
-					err = c.UnlinkServer(id)
+					err = c.UnlinkServer(ctx, id)
 					if err != nil {
 						return diag.FromErr(err)
 					}
@@ -347,7 +347,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			}
 
 			if unlinkRequired {
-				err = c.UnlinkServer(id)
+				err = c.UnlinkServer(ctx, id)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -355,7 +355,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 		}
 
 		// Get correct build params
-		locationId, imageId, diags := getParams(d, c)
+		locationId, imageId, diags := getParams(ctx, d, c)
 		if diags != nil {
 			return diags
 		}
@@ -379,7 +379,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 		}
 
 		// Rebuild server with potentially updated params
-		_, err = c.BuildServer(id, req)
+		_, err = c.BuildServer(ctx, id, req)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -389,7 +389,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			d.Set("params", req.Params)
 		}
 
-		if _, err := wait4Status(id, "RUNNING", c); err != nil {
+		if _, err := wait4Status(ctx, id, "RUNNING", c); err != nil {
 			return err
 		}
 	}
@@ -405,21 +405,21 @@ func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m any) di
 		return diag.FromErr(err)
 	}
 
-	err = c.DeleteServer(id, true)
+	err = c.DeleteServer(ctx, id, true)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// await termination
-	if _, err := wait4Status(id, "TERMINATED", c); err != nil {
+	if _, err := wait4Status(ctx, id, "TERMINATED", c); err != nil {
 		return err
 	}
 	return nil
 }
 
-func wait4Status(serverId int, status string, client *gona.Client) (server gona.Server, d diag.Diagnostics) {
-	for i := 0; i < tries; i++ {
-		server, err := client.GetServer(serverId)
+func wait4Status(ctx context.Context, serverId int, status string, client *gona.Client) (server gona.Server, d diag.Diagnostics) {
+	for i := range tries {
+		server, err := client.GetServer(ctx, serverId)
 
 		// Special-case deletion: when waiting for TERMINATED, treat either a real
 		// TERMINATED or a blank status (due to the 422/invalid-mbpkgid) as success.
@@ -444,15 +444,15 @@ func wait4Status(serverId int, status string, client *gona.Client) (server gona.
 	return server, diag.Errorf("Timeout of waiting the server to obtain %q status", status)
 }
 
-func getParams(d *schema.ResourceData, client *gona.Client) (int, int, diag.Diagnostics) {
+func getParams(ctx context.Context, d *schema.ResourceData, client *gona.Client) (int, int, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	locationId, ld := getLocation(d, client)
+	locationId, ld := getLocation(ctx, d, client)
 	if ld != nil {
 		diags = append(diags, *ld)
 	}
 	imageId, exists := d.GetOk("image_id")
 	if !exists {
-		image, d := getImageByName(d.Get("image").(string), client)
+		image, d := getImageByName(ctx, d.Get("image").(string), client)
 		if d != nil {
 			diags = append(diags, *d)
 		} else {
@@ -463,7 +463,7 @@ func getParams(d *schema.ResourceData, client *gona.Client) (int, int, diag.Diag
 	return locationId, imageId.(int), diags
 }
 
-func getLocation(d *schema.ResourceData, client *gona.Client) (int, *diag.Diagnostic) {
+func getLocation(ctx context.Context, d *schema.ResourceData, client *gona.Client) (int, *diag.Diagnostic) {
 	locationId, exists := d.GetOk("location_id")
 	if exists {
 		return locationId.(int), nil
@@ -474,7 +474,7 @@ func getLocation(d *schema.ResourceData, client *gona.Client) (int, *diag.Diagno
 		return 0, &diag.Errorf("Please provide a location or location_id")[0]
 	}
 
-	locations, err := client.GetLocations()
+	locations, err := client.GetLocations(ctx)
 	if err != nil {
 		return 0, &diag.FromErr(err)[0]
 	}
@@ -491,8 +491,8 @@ func getLocation(d *schema.ResourceData, client *gona.Client) (int, *diag.Diagno
 	return 0, &diag.Errorf("Provided location %q doesn't exist", locationId)[0]
 }
 
-func getImageByName(name string, client *gona.Client) (*gona.OS, *diag.Diagnostic) {
-	oss, err := client.GetOSs()
+func getImageByName(ctx context.Context, name string, client *gona.Client) (*gona.OS, *diag.Diagnostic) {
+	oss, err := client.GetOSs(ctx)
 	if err != nil {
 		return nil, &diag.FromErr(err)[0]
 	}

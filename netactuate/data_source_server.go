@@ -110,17 +110,19 @@ func dataSourceServer() *schema.Resource {
 func dataSourceServerRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 
-	server, err := c.GetServer(d.Get("id").(int))
+	server, err := c.GetServer(ctx, d.Get("id").(int))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	ips, err := c.GetIPs(server.ID)
+	// TODO: Optimize to avoid serial API calls
+
+	ips, err := c.GetIPs(ctx, server.ID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	bgpSessions, err := c.GetBGPSessions(server.ID)
+	bgpSessions, err := c.GetBGPSessions(ctx, server.ID)
 	if err != nil {
 		return diag.FromErr(err)
 	}

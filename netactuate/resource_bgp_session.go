@@ -44,7 +44,7 @@ func resourceBGPSessions() *schema.Resource {
 	}
 }
 
-func resourceBGPSessionCreate(_ context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func resourceBGPSessionCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 
 	if _, err := c.CreateBGPSessions(

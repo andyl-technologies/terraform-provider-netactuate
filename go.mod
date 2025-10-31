@@ -50,4 +50,4 @@ require (
 	google.golang.org/protobuf v1.36.10 // indirect
 )
 
-replace github.com/netactuate/gona => github.com/andyl-technologies/gona v0.3.0-pre
+replace github.com/netactuate/gona => github.com/andyl-technologies/gona v0.3.0-pre1

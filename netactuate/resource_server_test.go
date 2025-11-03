@@ -7,19 +7,9 @@ import (
 )
 
 func TestHostnameRegex(t *testing.T) {
-	// Build the regex pattern the same way as in resource_server.go
-	// BUG: missing the ^ anchor at the beginning, making it match if the
-	// pattern appears anywhere in the string, not just if the entire string
-	// matches. This allows invalid hostnames through.
-	pattern := fmt.Sprintf("(%[1]s\\.)*%[1]s$", fmt.Sprintf("(%[1]s|%[1]s%[2]s*%[1]s)", "[a-zA-Z0-9]", "[a-zA-Z0-9\\-]"))
-	regex := regexp.MustCompile(pattern)
-
-	t.Log("Current regex pattern (BUGGY):", pattern)
-	t.Log("Fixed pattern should be:", "^"+pattern)
-
 	tests := []struct {
 		hostname      string
-		currentValid  bool // What the BUGGY regex currently matches
+		_currentValid  bool // What the BUGGY regex currently matches
 		expectedValid bool // What it SHOULD match
 		desc          string
 	}{
@@ -91,40 +81,21 @@ func TestHostnameRegex(t *testing.T) {
 		{"k8s-worker-node-42.cluster.local", true, true, "realistic kubernetes hostname"},
 	}
 
-	bugCount := 0
 	for _, tt := range tests {
 		t.Run(tt.hostname, func(t *testing.T) {
-			match := regex.MatchString(tt.hostname)
-
-			// Test against current behavior
-			if match != tt.currentValid {
-				t.Errorf("hostname %q: current behavior changed! expected currentValid=%v, got=%v (%s)",
-					tt.hostname, tt.currentValid, match, tt.desc)
-			}
+			match := hostnameRegex.MatchString(tt.hostname)
 
 			// Log when current behavior differs from expected
-			if tt.currentValid != tt.expectedValid {
-				t.Logf("BUG: hostname %q currently returns %v but should return %v (%s)",
-					tt.hostname, tt.currentValid, tt.expectedValid, tt.desc)
+			if match != tt.expectedValid {
+				t.Errorf("BUG: hostname %q returns %v but should return %v (%s)",
+					tt.hostname, match, tt.expectedValid, tt.desc)
 			}
 		})
-
-		if tt.currentValid != tt.expectedValid {
-			bugCount++
-		}
 	}
-
-	t.Logf("Total bugs found: %d test cases where current behavior differs from expected", bugCount)
 }
 
 // TestHostnameRegexFixed tests what the correct behavior should be
 func TestHostnameRegexFixed(t *testing.T) {
-	// The FIXED regex with ^ anchor at the beginning
-	fixedPattern := "^" + fmt.Sprintf("(%[1]s\\.)*%[1]s$", fmt.Sprintf("(%[1]s|%[1]s%[2]s*%[1]s)", "[a-zA-Z0-9]", "[a-zA-Z0-9\\-]"))
-	fixedRegex := regexp.MustCompile(fixedPattern)
-
-	t.Log("Fixed regex pattern:", fixedPattern)
-
 	tests := []struct {
 		hostname string
 		valid    bool
@@ -152,7 +123,7 @@ func TestHostnameRegexFixed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.hostname, func(t *testing.T) {
-			match := fixedRegex.MatchString(tt.hostname)
+			match := hostnameRegex.MatchString(tt.hostname)
 			if match != tt.valid {
 				t.Errorf("hostname %q: expected valid=%v, got valid=%v (%s)",
 					tt.hostname, tt.valid, match, tt.desc)
@@ -164,7 +135,7 @@ func TestHostnameRegexFixed(t *testing.T) {
 func TestHostnameRegexValue(t *testing.T) {
 	// Verify the regex pattern is what we expect
 	expectedInner := "([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])"
-	expectedOuter := fmt.Sprintf("(%s\\.)*%s$", expectedInner, expectedInner)
+	expectedOuter := fmt.Sprintf("^(%s\\.)*%s$", expectedInner, expectedInner)
 
 	actualOuter := hostnameRegex.String()
 
@@ -172,16 +143,10 @@ func TestHostnameRegexValue(t *testing.T) {
 		t.Errorf("hostnameRegex pattern mismatch:\nexpected: %s\ngot:      %s",
 			expectedOuter, actualOuter)
 	}
-
-	// Verify it compiles
-	_, err := regexp.Compile(actualOuter)
-	if err != nil {
-		t.Errorf("hostnameRegex failed to compile: %v", err)
-	}
 }
 
 func BenchmarkHostnameRegex(b *testing.B) {
-	pattern := fmt.Sprintf("(%[1]s\\.)*%[1]s$", fmt.Sprintf("(%[1]s|%[1]s%[2]s*%[1]s)", "[a-zA-Z0-9]", "[a-zA-Z0-9\\-]"))
+	pattern := hostnameRegex.String()
 	regex := regexp.MustCompile(pattern)
 	hostname := "my-server-01.prod-us-east-1.example.com"
 

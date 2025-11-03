@@ -27,7 +27,7 @@ var (
 	imageKeys      = []string{"image", "image_id"}
 	billingKeys    = []string{"package_billing_contract_id", "package_billing_opt_in"}
 
-	hostnameRegex = regexp.MustCompile(fmt.Sprintf("(%[1]s\\.)*%[1]s$", fmt.Sprintf("(%[1]s|%[1]s%[2]s*%[1]s)", "[a-zA-Z0-9]", "[a-zA-Z0-9\\-]")))
+	hostnameRegex = regexp.MustCompile(fmt.Sprintf("^(%[1]s\\.)*%[1]s$", fmt.Sprintf("(%[1]s|%[1]s%[2]s*%[1]s)", "[a-zA-Z0-9]", "[a-zA-Z0-9\\-]")))
 )
 
 func resourceServer() *schema.Resource {

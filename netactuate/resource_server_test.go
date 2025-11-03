@@ -8,117 +8,76 @@ import (
 
 func TestHostnameRegex(t *testing.T) {
 	tests := []struct {
-		hostname      string
-		_currentValid  bool // What the BUGGY regex currently matches
-		expectedValid bool // What it SHOULD match
-		desc          string
-	}{
-		// Valid single-label hostnames
-		{"a", true, true, "single character hostname"},
-		{"z", true, true, "single character hostname"},
-		{"0", true, true, "single digit hostname"},
-		{"9", true, true, "single digit hostname"},
-		{"example", true, true, "simple hostname"},
-		{"server1", true, true, "hostname with number"},
-		{"web-server", true, true, "hostname with hyphen"},
-		{"my-server-123", true, true, "hostname with multiple hyphens and numbers"},
-		{"a1b2c3", true, true, "hostname with mixed alphanumeric"},
-
-		// Valid multi-label hostnames (FQDNs)
-		{"example.com", true, true, "simple FQDN"},
-		{"www.example.com", true, true, "subdomain FQDN"},
-		{"api.v1.example.com", true, true, "multiple subdomain levels"},
-		{"my-server.example.com", true, true, "subdomain with hyphen"},
-		{"server1.dc2.example.com", true, true, "multiple labels with numbers"},
-		{"a.b.c.d.e.f.g", true, true, "many label levels"},
-		{"1.2.3.4", true, true, "numeric labels (though unusual for hostnames)"},
-		{"web-01.prod-us-east-1.example.com", true, true, "complex production hostname"},
-
-		// BUG: Should be invalid but currently passes (starts with hyphen)
-		{"-server", true, false, "BUG: starts with hyphen - should fail but passes"},
-		{"-example.com", true, false, "BUG: label starts with hyphen - should fail but passes"},
-		{"server.-example.com", true, false, "BUG: second label starts with hyphen - should fail but passes"},
-
-		// Correctly rejected: ends with hyphen
-		{"server-", false, false, "ends with hyphen"},
-		{"example-.com", true, false, "BUG: label ends with hyphen - should fail but passes"},
-		{"server.example-.com", true, false, "BUG: second label ends with hyphen - should fail but passes"},
-
-		// BUG: Should be invalid but currently passes (starts with dot)
-		{".example", true, false, "BUG: starts with dot - should fail but passes"},
-		{"example.", false, false, "ends with dot"},
-		{".example.com", true, false, "BUG: starts with dot - should fail but passes"},
-		{"example.com.", false, false, "ends with dot"},
-
-		// BUG: Should be invalid but currently passes (double dots)
-		{"example..com", true, false, "BUG: double dot - should fail but passes"},
-		{"server..example.com", true, false, "BUG: double dot in middle - should fail but passes"},
-
-		// BUG: Should be invalid but currently passes (special characters)
-		{"example_com", true, false, "BUG: underscore not allowed - should fail but passes"},
-		{"example@com", true, false, "BUG: @ symbol not allowed - should fail but passes"},
-		{"example#com", true, false, "BUG: # symbol not allowed - should fail but passes"},
-		{"example com", true, false, "BUG: space not allowed - should fail but passes"},
-		{"example/com", true, false, "BUG: slash not allowed - should fail but passes"},
-
-		// Correctly rejected: empty string
-		{"", false, false, "empty string"},
-
-		// Edge cases: single character labels with dots
-		{"a.b", true, true, "single char labels with dot"},
-		{"a.b.c", true, true, "multiple single char labels"},
-
-		// Edge cases: hyphen placement
-		{"a-b", true, true, "hyphen between chars"},
-		{"a-b-c", true, true, "multiple hyphens"},
-		{"1-2-3", true, true, "hyphens between numbers"},
-		{"a--b", true, true, "consecutive hyphens in middle (valid)"},
-
-		// Realistic hostnames
-		{"terraform.example.com", true, true, "realistic terraform hostname"},
-		{"prod-web-01.us-east-1.example.com", true, true, "realistic production hostname"},
-		{"db-master-001.internal.example.com", true, true, "realistic database hostname"},
-		{"k8s-worker-node-42.cluster.local", true, true, "realistic kubernetes hostname"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.hostname, func(t *testing.T) {
-			match := hostnameRegex.MatchString(tt.hostname)
-
-			// Log when current behavior differs from expected
-			if match != tt.expectedValid {
-				t.Errorf("BUG: hostname %q returns %v but should return %v (%s)",
-					tt.hostname, match, tt.expectedValid, tt.desc)
-			}
-		})
-	}
-}
-
-// TestHostnameRegexFixed tests what the correct behavior should be
-func TestHostnameRegexFixed(t *testing.T) {
-	tests := []struct {
 		hostname string
 		valid    bool
 		desc     string
 	}{
-		// Valid hostnames
-		{"a", true, "single character"},
+		// Valid single-label hostnames
+		{"a", true, "single character hostname"},
+		{"z", true, "single character hostname"},
+		{"0", true, "single digit hostname"},
+		{"9", true, "single digit hostname"},
 		{"example", true, "simple hostname"},
+		{"server1", true, "hostname with number"},
 		{"web-server", true, "hostname with hyphen"},
+		{"my-server-123", true, "hostname with multiple hyphens and numbers"},
+		{"a1b2c3", true, "hostname with mixed alphanumeric"},
+
+		// Valid multi-label hostnames (FQDNs)
 		{"example.com", true, "simple FQDN"},
 		{"www.example.com", true, "subdomain FQDN"},
-		{"my-server-123.example.com", true, "complex hostname"},
+		{"api.v1.example.com", true, "multiple subdomain levels"},
+		{"my-server.example.com", true, "subdomain with hyphen"},
+		{"server1.dc2.example.com", true, "multiple labels with numbers"},
+		{"a.b.c.d.e.f.g", true, "many label levels"},
+		{"1.2.3.4", true, "numeric labels (though unusual for hostnames)"},
+		{"web-01.prod-us-east-1.example.com", true, "complex production hostname"},
 
-		// Invalid hostnames
+		// Invalid: starts with hyphen
 		{"-server", false, "starts with hyphen"},
+		{"-example.com", false, "label starts with hyphen"},
+		{"server.-example.com", false, "second label starts with hyphen"},
+
+		// Invalid: ends with hyphen
 		{"server-", false, "ends with hyphen"},
+		{"example-.com", false, "label ends with hyphen"},
+		{"server.example-.com", false, "second label ends with hyphen"},
+
+		// Invalid: starts or ends with dot
 		{".example", false, "starts with dot"},
 		{"example.", false, "ends with dot"},
+		{".example.com", false, "starts with dot"},
+		{"example.com.", false, "ends with dot"},
+
+		// Invalid: double dots
 		{"example..com", false, "double dot"},
+		{"server..example.com", false, "double dot in middle"},
+
+		// Invalid: special characters
 		{"example_com", false, "underscore not allowed"},
 		{"example@com", false, "@ symbol not allowed"},
+		{"example#com", false, "# symbol not allowed"},
 		{"example com", false, "space not allowed"},
+		{"example/com", false, "slash not allowed"},
+
+		// Invalid: empty string
 		{"", false, "empty string"},
+
+		// Edge cases: single character labels with dots
+		{"a.b", true, "single char labels with dot"},
+		{"a.b.c", true, "multiple single char labels"},
+
+		// Edge cases: hyphen placement
+		{"a-b", true, "hyphen between chars"},
+		{"a-b-c", true, "multiple hyphens"},
+		{"1-2-3", true, "hyphens between numbers"},
+		{"a--b", true, "consecutive hyphens in middle (valid)"},
+
+		// Realistic hostnames
+		{"terraform.example.com", true, "realistic terraform hostname"},
+		{"prod-web-01.us-east-1.example.com", true, "realistic production hostname"},
+		{"db-master-001.internal.example.com", true, "realistic database hostname"},
+		{"k8s-worker-node-42.cluster.local", true, "realistic kubernetes hostname"},
 	}
 
 	for _, tt := range tests {

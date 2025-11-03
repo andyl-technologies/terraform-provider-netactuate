@@ -166,8 +166,7 @@ func TestHostnameRegexValue(t *testing.T) {
 	expectedInner := "([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])"
 	expectedOuter := fmt.Sprintf("(%s\\.)*%s$", expectedInner, expectedInner)
 
-	actualInner := fmt.Sprintf("(%[1]s|%[1]s%[2]s*%[1]s)", "[a-zA-Z0-9]", "[a-zA-Z0-9\\-]")
-	actualOuter := fmt.Sprintf("(%[1]s\\.)*%[1]s$", actualInner)
+	actualOuter := hostnameRegex.String()
 
 	if actualOuter != expectedOuter {
 		t.Errorf("hostnameRegex pattern mismatch:\nexpected: %s\ngot:      %s",

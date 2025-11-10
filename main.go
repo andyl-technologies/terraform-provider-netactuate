@@ -1,11 +1,10 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/netactuate/terraform-provider-netactuate/netactuate"
 )
@@ -21,17 +20,16 @@ func main() {
 	flag.Parse()
 
 	opts := &plugin.ServeOpts{
-		ProviderFunc: func() *schema.Provider {
-			return netactuate.Provider()
-		},
-	}
+		ProviderFunc: netactuate.Provider,
+		ProviderAddr: ProviderAddr,
 
-	if debugMode {
-		err := plugin.Debug(context.Background(), ProviderAddr, opts)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		return
+		Debug: debugMode,
+		Logger: hclog.FromStandardLogger(
+			log.Default(),
+			&hclog.LoggerOptions{
+				Name: "terraform-provider-netactuate",
+			},
+		),
 	}
 
 	plugin.Serve(opts)

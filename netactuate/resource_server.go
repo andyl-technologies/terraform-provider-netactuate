@@ -133,6 +133,7 @@ func resourceServer() *schema.Resource {
 				ForceNew: false,
 				Optional: true,
 			},
+			// XXX: ExactlyOneOf user_data and user_data_base64?
 			"user_data": {
 				Type:     schema.TypeString,
 				ForceNew: false,
@@ -286,7 +287,7 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m any) diag
 func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 	// Rebuild on these property changes
-	if d.HasChanges("location", "location_id", "image", "image_id", "hostname", "params") {
+	if d.HasChanges("location", "location_id", "image", "image_id", "hostname", "params", "cloud_config") {
 		id, err := strconv.Atoi(d.Id())
 		if err != nil {
 			return diag.FromErr(err)

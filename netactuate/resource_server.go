@@ -133,6 +133,7 @@ func resourceServer() *schema.Resource {
 				ForceNew: false,
 				Optional: true,
 			},
+			// XXX: ExactlyOneOf user_data and user_data_base64?
 			"user_data": {
 				Type:     schema.TypeString,
 				ForceNew: false,
@@ -286,7 +287,7 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m any) diag
 func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 	// Rebuild on these property changes
-	if d.HasChanges("location", "location_id", "image", "image_id", "hostname", "params") {
+	if d.HasChanges("location", "location_id", "image", "image_id", "hostname", "params", "cloud_config") {
 		id, err := strconv.Atoi(d.Id())
 		if err != nil {
 			return diag.FromErr(err)
@@ -308,6 +309,9 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			}
 		}
 
+		// XXX consolidate all this location logic in to getLocation
+		// or an updateLocation that shares logic. if "location" resolves
+		// the the same change made in "location_id", this can double-unlink.
 		// unlink if changing locationID
 		unlinkRequired := false
 
@@ -316,16 +320,13 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			oldLoc := oldLoc_r.(string)
 			setValue("location_id", 0, d, &diag.Diagnostics{})
 			if oldLoc != "" {
-				var diags diag.Diagnostics
 				unlinkRequired = true
-				if len(diags) > 0 {
-					return diags
-				}
 				if unlinkRequired {
 					err = c.UnlinkServer(ctx, id)
 					if err != nil {
 						return diag.FromErr(err)
 					}
+					// XXX set unlinkRequired to false now that it has already been done?
 				}
 			}
 		}
@@ -337,6 +338,8 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 				unlinkRequired = true
 			}
 
+			// XXX UnlinkServer happens multiple times if both location and location_id are changed
+			// should instead reconcile all the changes and call UnlinkServer only once if needed
 			if unlinkRequired {
 				err = c.UnlinkServer(ctx, id)
 				if err != nil {

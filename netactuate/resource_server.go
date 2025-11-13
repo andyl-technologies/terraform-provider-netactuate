@@ -31,6 +31,10 @@ var (
 )
 
 func resourceServer() *schema.Resource {
+	recalc_ipaddr := func(_ context.Context, d *schema.ResourceDiff, _meta any) bool {
+		return d.HasChanges("location_id", "image", "image_id", "hostname")
+	}
+
 	return &schema.Resource{
 		CreateContext: resourceServerCreate,
 		ReadContext:   resourceServerRead,
@@ -82,11 +86,8 @@ func resourceServer() *schema.Resource {
 				StateFunc: func(val any) string {
 					return strings.ToUpper(val.(string))
 				},
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if new == "" || strings.EqualFold(strings.ToUpper(old), strings.Fields(new)[0]) {
-						return true
-					}
-					return false
+				DiffSuppressFunc: func(_, old, new string, _ *schema.ResourceData) bool {
+					return new == "" || strings.EqualFold(strings.ToUpper(old), strings.Fields(new)[0])
 				},
 			},
 			"location_id": {
@@ -157,12 +158,8 @@ func resourceServer() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(
-			customdiff.ComputedIf("primary_ipv4", func(_ context.Context, d *schema.ResourceDiff, _meta any) bool {
-				return d.HasChange("location_id") || d.HasChange("image") || d.HasChange("image_id") || d.HasChange("hostname")
-			}),
-			customdiff.ComputedIf("primary_ipv6", func(_ context.Context, d *schema.ResourceDiff, _meta any) bool {
-				return d.HasChange("location_id") || d.HasChange("image") || d.HasChange("image_id") || d.HasChange("hostname")
-			}),
+			customdiff.ComputedIf("primary_ipv4", recalc_ipaddr),
+			customdiff.ComputedIf("primary_ipv6", recalc_ipaddr),
 		),
 	}
 }
@@ -289,7 +286,7 @@ func resourceServerRead(ctx context.Context, d *schema.ResourceData, m any) diag
 func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	c := m.(*gona.Client)
 	// Rebuild on these property changes
-	if d.HasChange("location") || d.HasChange("location_id") || d.HasChange("image") || d.HasChange("image_id") || d.HasChange("hostname") || d.HasChange("params") {
+	if d.HasChanges("location", "location_id", "image", "image_id", "hostname", "params") {
 		id, err := strconv.Atoi(d.Id())
 		if err != nil {
 			return diag.FromErr(err)

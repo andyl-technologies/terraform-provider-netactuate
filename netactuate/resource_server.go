@@ -233,8 +233,8 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	d.SetId(strconv.Itoa(s.ServerID))
 	d.Set("params", req.Params) // Store params in the state file
 
-	if _, err := wait4Status(s.ServerID, "RUNNING", c); err != nil {
-		return err
+	if _, diags := wait4Status(s.ServerID, "RUNNING", c); diags.HasError() {
+		return diags
 	}
 
 	server, err := c.GetServer(s.ServerID)
@@ -312,8 +312,8 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			}
 
 			// await termination
-			if _, err := wait4Status(id, "TERMINATED", c); err != nil {
-				return err
+			if _, diags := wait4Status(id, "TERMINATED", c); diags.HasError() {
+				return diags
 			}
 		}
 
@@ -385,8 +385,8 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			d.Set("params", req.Params)
 		}
 
-		if _, err := wait4Status(id, "RUNNING", c); err != nil {
-			return err
+		if _, diags := wait4Status(id, "RUNNING", c); diags.HasError() {
+			return diags
 		}
 	}
 
@@ -407,13 +407,11 @@ func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// await termination
-	if _, err := wait4Status(id, "TERMINATED", c); err != nil {
-		return err
-	}
-	return nil
+	_, diags := wait4Status(id, "TERMINATED", c)
+	return diags
 }
 
-func wait4Status(serverId int, status string, client *gona.Client) (server gona.Server, d diag.Diagnostics) {
+func wait4Status(serverId int, status string, client *gona.Client) (gona.Server, diag.Diagnostics) {
 	for i := 0; i < tries; i++ {
 		server, err := client.GetServer(serverId)
 
@@ -437,7 +435,7 @@ func wait4Status(serverId int, status string, client *gona.Client) (server gona.
 		time.Sleep(intervalSec * time.Second)
 	}
 
-	return server, diag.Errorf("Timeout of waiting the server to obtain %q status", status)
+	return gona.Server{}, diag.Errorf("Timeout of waiting the server to obtain %q status", status)
 }
 
 func getParams(d *schema.ResourceData, client *gona.Client) (int, int, diag.Diagnostics) {

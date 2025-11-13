@@ -47,7 +47,7 @@ func dataSourceSshKeyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	setValue("key", sshKey.Key, d, &diags)
 	setValue("fingerprint", sshKey.Fingerprint, d, &diags)
 
-	if diags == nil {
+	if !diags.HasError() {
 		d.SetId(strconv.Itoa(sshKey.ID))
 	}
 

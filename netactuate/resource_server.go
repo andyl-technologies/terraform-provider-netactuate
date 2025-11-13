@@ -308,6 +308,9 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			}
 		}
 
+		// XXX consolidate all this location logic in to getLocation
+		// or an updateLocation that shares logic. if "location" resolves
+		// the the same change made in "location_id", this can double-unlink.
 		// unlink if changing locationID
 		unlinkRequired := false
 
@@ -316,16 +319,13 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			oldLoc := oldLoc_r.(string)
 			setValue("location_id", 0, d, &diag.Diagnostics{})
 			if oldLoc != "" {
-				var diags diag.Diagnostics
 				unlinkRequired = true
-				if len(diags) > 0 {
-					return diags
-				}
 				if unlinkRequired {
 					err = c.UnlinkServer(ctx, id)
 					if err != nil {
 						return diag.FromErr(err)
 					}
+					// XXX set unlinkRequired to false now that it has already been done?
 				}
 			}
 		}
@@ -337,6 +337,8 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 				unlinkRequired = true
 			}
 
+			// XXX UnlinkServer happens multiple times if both location and location_id are changed
+			// should instead reconcile all the changes and call UnlinkServer only once if needed
 			if unlinkRequired {
 				err = c.UnlinkServer(ctx, id)
 				if err != nil {

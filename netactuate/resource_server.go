@@ -177,7 +177,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*gona.Client)
 
 	locationId, imageId, diags := getParams(d, c)
-	if diags != nil {
+	if diags.HasError() {
 		return diags
 	}
 	diags = diag.Diagnostics{}
@@ -325,11 +325,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			oldLoc := oldLoc_r.(string)
 			setValue("location_id", 0, d, &diag.Diagnostics{})
 			if oldLoc != "" {
-				var diags diag.Diagnostics
 				unlinkRequired = true
-				if len(diags) > 0 {
-					return diags
-				}
 				if unlinkRequired {
 					err = c.UnlinkServer(id)
 					if err != nil {
@@ -356,7 +352,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 
 		// Get correct build params
 		locationId, imageId, diags := getParams(d, c)
-		if diags != nil {
+		if diags.HasError() {
 			return diags
 		}
 		req := &gona.BuildServerRequest{

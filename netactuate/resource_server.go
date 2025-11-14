@@ -169,7 +169,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m any) di
 	c := m.(*gona.Client)
 
 	locationId, imageId, diags := getParams(ctx, d, c)
-	if diags != nil {
+	if diags.HasError() {
 		return diags
 	}
 	diags = diag.Diagnostics{}
@@ -225,7 +225,7 @@ func resourceServerCreate(ctx context.Context, d *schema.ResourceData, m any) di
 	d.SetId(strconv.Itoa(s.ServerID))
 	d.Set("params", req.Params) // Store params in the state file
 
-	if _, err := wait4Status(ctx, s.ServerID, "RUNNING", c); err != nil {
+	if _, err := wait4Status(ctx, s.ServerID, "RUNNING", c); err.HasError() {
 		return err
 	}
 
@@ -304,7 +304,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			}
 
 			// await termination
-			if _, err := wait4Status(ctx, id, "TERMINATED", c); err != nil {
+			if _, err := wait4Status(ctx, id, "TERMINATED", c); err.HasError() {
 				return err
 			}
 		}
@@ -317,11 +317,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			oldLoc := oldLoc_r.(string)
 			setValue("location_id", 0, d, &diag.Diagnostics{})
 			if oldLoc != "" {
-				var diags diag.Diagnostics
 				unlinkRequired = true
-				if len(diags) > 0 {
-					return diags
-				}
 				if unlinkRequired {
 					err = c.UnlinkServer(ctx, id)
 					if err != nil {
@@ -348,7 +344,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 
 		// Get correct build params
 		locationId, imageId, diags := getParams(ctx, d, c)
-		if diags != nil {
+		if diags.HasError() {
 			return diags
 		}
 		req := &gona.BuildServerRequest{
@@ -381,7 +377,7 @@ func resourceServerUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			d.Set("params", req.Params)
 		}
 
-		if _, err := wait4Status(ctx, id, "RUNNING", c); err != nil {
+		if _, err := wait4Status(ctx, id, "RUNNING", c); err.HasError() {
 			return err
 		}
 	}
@@ -403,10 +399,8 @@ func resourceServerDelete(ctx context.Context, d *schema.ResourceData, m any) di
 	}
 
 	// await termination
-	if _, err := wait4Status(ctx, id, "TERMINATED", c); err != nil {
-		return err
-	}
-	return nil
+	_, diags := wait4Status(ctx, id, "TERMINATED", c)
+	return diags
 }
 
 func wait4Status(ctx context.Context, serverId int, status string, client *gona.Client) (server gona.Server, d diag.Diagnostics) {

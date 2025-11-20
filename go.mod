@@ -5,6 +5,7 @@ go 1.24.6
 require (
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/go-hclog v1.6.3
+	github.com/hashicorp/terraform-plugin-framework v1.16.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.1
 	github.com/netactuate/gona v0.0.0-20240411214507-62f71253081f
 )

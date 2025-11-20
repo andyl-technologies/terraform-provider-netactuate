@@ -8,7 +8,15 @@ import (
 	"github.com/netactuate/gona/gona"
 )
 
+// Provider returns the SDK v2 provider (legacy)
+// This is kept for backward compatibility during migration
 func Provider() *schema.Provider {
+	return NewSDKProvider("")
+}
+
+// NewSDKProvider creates a new SDK v2 provider instance
+// Used during mux-based migration
+func NewSDKProvider(version string) *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {

@@ -17,8 +17,8 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("NETACTUATE_API_KEY", nil),
 			},
 			"api_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

@@ -8,10 +8,14 @@ import (
 	"github.com/netactuate/gona/gona"
 )
 
+const (
+	ProviderVersion = "0.4.0-dev"
+)
+
 // Provider returns the SDK v2 provider (legacy)
 // This is kept for backward compatibility during migration
 func Provider() *schema.Provider {
-	return NewSDKProvider("")
+	return NewSDKProvider(ProviderVersion)
 }
 
 // NewSDKProvider creates a new SDK v2 provider instance

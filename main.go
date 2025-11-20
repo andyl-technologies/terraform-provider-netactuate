@@ -16,7 +16,6 @@ import (
 
 const (
 	ProviderAddr = "registry.terraform.io/netactuate/netactuate"
-	version      = "dev"
 )
 
 func main() {
@@ -29,7 +28,7 @@ func main() {
 	// Wrap the SDK v2 provider with tf5to6server to upgrade it to protocol 6
 	upgradedSdkProvider, err := tf5to6server.UpgradeServer(
 		ctx,
-		netactuate.NewSDKProvider(version).GRPCProvider,
+		netactuate.NewSDKProvider(netactuate.ProviderVersion).GRPCProvider,
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -37,7 +36,7 @@ func main() {
 
 	// Create the new Plugin Framework provider
 	frameworkProvider := providerserver.NewProtocol6(
-		netactuate.NewFrameworkProvider(version),
+		netactuate.NewFrameworkProvider(netactuate.ProviderVersion),
 	)
 
 	// Mux the providers together

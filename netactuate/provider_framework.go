@@ -13,7 +13,8 @@ import (
 
 // FrameworkProvider is the Plugin Framework provider implementation
 type FrameworkProvider struct {
-	version string
+	version     string
+	gonaVersion string
 }
 
 // FrameworkProviderModel describes the provider configuration
@@ -25,7 +26,8 @@ type FrameworkProviderModel struct {
 // NewFrameworkProvider creates a new instance of the Framework provider
 func NewFrameworkProvider(version string) provider.Provider {
 	return &FrameworkProvider{
-		version: version,
+		version:     version,
+		gonaVersion: gona.Version,
 	}
 }
 

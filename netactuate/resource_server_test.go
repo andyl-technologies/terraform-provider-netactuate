@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHostnameRegex(t *testing.T) {
@@ -83,10 +85,8 @@ func TestHostnameRegex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.hostname, func(t *testing.T) {
 			match := hostnameRegex.MatchString(tt.hostname)
-			if match != tt.valid {
-				t.Errorf("hostname %q: expected valid=%v, got valid=%v (%s)",
-					tt.hostname, tt.valid, match, tt.desc)
-			}
+			assert.Equal(t, tt.valid, match,
+				"hostname %q: %s", tt.hostname, tt.desc)
 		})
 	}
 }
@@ -98,10 +98,7 @@ func TestHostnameRegexValue(t *testing.T) {
 
 	actualOuter := hostnameRegex.String()
 
-	if actualOuter != expectedOuter {
-		t.Errorf("hostnameRegex pattern mismatch:\nexpected: %s\ngot:      %s",
-			expectedOuter, actualOuter)
-	}
+	assert.Equal(t, expectedOuter, actualOuter, "hostnameRegex pattern should match expected pattern")
 }
 
 func BenchmarkHostnameRegex(b *testing.B) {

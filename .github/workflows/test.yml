@@ -38,7 +38,7 @@ jobs:
           sed -e 's#github.com/netactuate/terraform-provider-netactuate#github.com/${{ github.repository }}#g' cover.out > tmpfile && mv tmpfile cover.out
       - name: Archive code coverage results
         if: matrix.go == 'stable'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: code-coverage-${{ matrix.go }}
           path: cover.out
